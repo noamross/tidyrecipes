@@ -1,0 +1,44 @@
+---
+title: "Pumpkin Bread Recipe Variation"
+author: "Noam Ross"
+date: '2018-11-14'
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+library(patchwork)
+knitr::opts_chunk$set(fig.path = '')
+url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vReilJoGr0hyNEP7u9npNmVkG9jWjOGabz-C2l7svM1f4PE7VXeN-1mQ-uoVdNZx-E1FvPfr_zutCZN/pub?gid=0&single=true&output=csv"
+# Sheet link: 
+```
+
+```{r}
+raw_pumkin <- read_csv(url)
+pumpkin <- raw_pumkin %>% 
+  filter(!category %in% c("url", "method")) %>% 
+  gather("source", "quantity", -category, -ingredient, -units) %>% 
+  mutate(quantity = coalesce(as.numeric(quantity), 0),
+         category = paste0(category, " (", units, ")"))
+```
+
+```{r}
+pplots <- pumpkin %>% 
+  split(pumpkin$category) %>% 
+  map(function(x) {
+    ggplot(x, aes(x = source, y = quantity, fill = ingredient)) +
+      geom_col() +
+      coord_flip() +
+      theme_minimal() +
+      scale_fill_brewer(palette="Dark2") +
+      theme(legend.position = "bottom", legend.title = element_blank(),
+            axis.title = element_blank()) +
+      labs(title = x$category[1])
+  })
+```
+
+```{r pumpkin-plots, fig.width = 10, fig.height= 16}
+wrap_plots(pplots, ncol = 2)
+```
+
+
